@@ -1,0 +1,107 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'gamragb@gmail.com' ||
+        getUserData().role == 'admin'
+      );
+    }
+
+    function isStaff() {
+      return isSignedIn() && (getUserData().role in ['admin', 'staff']);
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Validation Helpers ---
+
+    function isValidProduct(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.price is number && data.price >= 0 &&
+             data.qty is int && data.qty >= 0 &&
+             data.keys().hasAll(['name', 'price', 'qty']) &&
+             data.keys().size() <= 5; // Allow for updatedAt
+    }
+
+    function isValidSale(data) {
+      return data.total is number && data.total >= 0 &&
+             data.date is string &&
+             data.items is list && data.items.size() > 0 && data.items.size() <= 50 &&
+             data.createdAt == request.time &&
+             data.keys().hasAll(['total', 'date', 'items', 'createdAt']);
+    }
+
+    function isValidCustomer(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.debt is number &&
+             data.keys().hasAll(['name', 'debt']);
+    }
+
+    function isValidUserProfile(data) {
+      return data.email is string && data.email == request.auth.token.email &&
+             data.role in ['admin', 'staff'] &&
+             data.createdAt == request.time;
+    }
+
+    // --- Collections ---
+
+    match /products/{productId} {
+      allow list: if isStaff();
+      allow get: if isStaff();
+      allow create: if isAdmin() && isValidProduct(incoming()) && isValidId(productId);
+      allow update: if (isAdmin() || isStaff()) && isValidProduct(incoming()) && (
+        // Staff can only update stock (qty)
+        isAdmin() || (incoming().diff(existing()).affectedKeys().hasOnly(['qty', 'updatedAt']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /sales/{saleId} {
+      allow list: if isStaff() && (isAdmin() || resource.data.staffId == request.auth.uid);
+      allow get: if isStaff();
+      allow create: if isStaff() && isValidSale(incoming()) && isValidId(saleId);
+      allow update: if isAdmin(); // Generally sales are immutable once created
+      allow delete: if isAdmin();
+    }
+
+    match /customers/{customerId} {
+      allow list: if isStaff();
+      allow get: if isStaff();
+      allow create: if isStaff() && isValidCustomer(incoming()) && isValidId(customerId);
+      allow update: if isStaff() && isValidCustomer(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && isValidUserProfile(incoming()) && incoming().role == 'staff'; // Default to staff
+      allow update: if isAdmin() && isValidUserProfile(incoming()); // Only admins can promote
+      allow delete: if isAdmin();
+    }
+  }
+}

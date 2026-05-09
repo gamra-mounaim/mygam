@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Inventory item for sale",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Display name of the product" },
+        "price": { "type": "number", "description": "Selling price" },
+        "costPrice": { "type": "number", "description": "Cost price for inventory valuation" },
+        "qty": { "type": "number", "description": "Current stock quantity" },
+        "minStock": { "type": "number", "description": "Safety stock threshold" },
+        "barcode": { "type": "string", "description": "SKU or Barcode identifier" },
+        "categoryId": { "type": "string", "description": "Identifier for the category" },
+        "supplier": { "type": "string", "description": "Supplier name" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "price", "qty"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Grouping for products",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the category" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Record of a transaction",
+      "type": "object",
+      "properties": {
+        "total": { "type": "number" },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["cash", "card", "debt"] },
+        "date": { "type": "string", "format": "date-time" },
+        "items": { "type": "array" },
+        "customerId": { "type": "string" },
+        "staffId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["total", "date", "items", "staffId"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Client profile with debt tracking",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "debt": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "debt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Staff or Admin profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "staff"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": { "schema": "Product", "description": "Store items" },
+    "/categories/{categoryId}": { "schema": "Category", "description": "Product groupings" },
+    "/sales/{saleId}": { "schema": "Sale", "description": "Transaction logs" },
+    "/customers/{customerId}": { "schema": "Customer", "description": "Client records" },
+    "/users/{userId}": { "schema": "UserProfile", "description": "User roles and permissions" }
+  }
+}
