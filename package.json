@@ -8,7 +8,7 @@
     "start": "node dist-server/server.cjs",
     "dev": "tsx server.ts",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "build:server": "esbuild server.ts --bundle --platform=node --target=node16 --external:better-sqlite3 --external:express --external:cors --external:dotenv --external:googleapis --external:nodemailer --external:twilio --external:uuid --outfile=dist-server/server.cjs",
+    "build:server": "esbuild server.ts --bundle --platform=node --target=node16 --external:better-sqlite3 --external:express --external:cors --external:dotenv --external:googleapis --external:nodemailer --external:twilio --external:uuid --external:vite --outfile=dist-server/server.cjs",
     "build": "vite build && npm run build:server",
     "electron:build": "npm run build && electron-builder",
     "preview": "vite preview",
