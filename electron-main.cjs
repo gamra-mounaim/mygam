@@ -19,6 +19,7 @@ function createWindow() {
 app.whenReady().then(() => {
   if (!isDev) {
     process.env.NODE_ENV = 'production';
+    process.env.USER_DATA_PATH = app.getPath('userData');
     require('./dist-server/server.cjs');
     setTimeout(createWindow, 1500);
   } else {

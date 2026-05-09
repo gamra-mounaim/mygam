@@ -20,7 +20,7 @@ const hashPassword = (password: string) => {
 async function startServer() {
   console.log("Starting server process...");
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
 
   try {
     initDb();
@@ -71,7 +71,7 @@ async function startServer() {
 
   // --- Auth API ---
   app.get("/api/auth/reset-admin", (req, res) => {
-    const adminHash = '03ac674216f3e15c1d7b18221dd69da636011406d9345c20c85023902146452f';
+    const adminHash = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
     const adminPerms = JSON.stringify({ 
       stock: true, 
       customers: true, 

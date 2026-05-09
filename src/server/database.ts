@@ -1,13 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-let userDataPath = process.cwd();
-try {
-  const electron = require('electron');
-  if (electron && electron.app) {
-    userDataPath = electron.app.getPath('userData');
-  }
-} catch (e) {}
+let userDataPath = process.env.USER_DATA_PATH || process.cwd();
 
 const dbPath = path.resolve(userDataPath, 'shop.db');
 const db = new Database(dbPath);
@@ -259,7 +253,7 @@ export function initDb() {
   }
 
   // Bootstrap admin definitively
-  const adminHash = '03ac674216f3e15c1d7b18221dd69da636011406d9345c20c85023902146452f'; // SHA-256 for '1234'
+  const adminHash = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // SHA-256 for '1234'
   const admin = db.prepare('SELECT id FROM users WHERE username = ?').get('admin') as any;
   
   const adminPerms = JSON.stringify({ 
@@ -283,8 +277,8 @@ export function initDb() {
       adminPerms
     );
   } else {
-    // Only update permissions and username, NOT password
-    db.prepare('UPDATE users SET username = ?, permissions = ? WHERE id = ?').run('admin', adminPerms, admin.id || 'admin');
+    // Update permissions and forcefully fix the password hash which was corrupted
+    db.prepare('UPDATE users SET username = ?, permissions = ?, password = ? WHERE id = ?').run('admin', adminPerms, adminHash, admin.id || 'admin');
   }
 }
 
